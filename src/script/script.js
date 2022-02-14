@@ -48,3 +48,5 @@ function init() {
     resizeCanvas(canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 }
+
+window.onload = init
