@@ -8,12 +8,43 @@
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
 <body>
+    <div id="sidebar">
+        <div class="model-selector">
+            <label for="model-selector">Model</label>
+            <select name="model-selector" id="model-selector">
+                <option value="line">Line</option>
+                <option value="square">Square</option>
+                <option value="rectangle">Rectangle</option>
+                <option value="polygon">Polygon</option>
+            </select>
+        </div>
+        <button id="add-model-button" type="button" value="add">Add</button>
+        <span id="feedback-banner"></span>
+    </div>
     <main>
         <canvas id="gl-canvas" width="600" height="600"></canvas>
     </main>
     <script src="script/script.js"></script>
-    <script id="vertex-shader" type="notjs" src="shader/vertexShader.js"></script>
-    <script id="fragment-shader" type="notjs" src="shader/fragmentShader.js"></script>
-    
+    <!-- <script id="vertex-shader" type="notjs" src="shader/vertexShader.js"></script>
+    <script id="fragment-shader" type="notjs" src="shader/fragmentShader.js"></script> -->
+    <script id="vertex-shader" type="notjs">
+        attribute vec2 a_position;
+
+        uniform mat3 u_matrix;
+
+        void main() {
+            // Multiply the position by the matrix.
+            gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        }
+    </script>
+    <script id="fragment-shader" type="notjs">
+        precision mediump float;
+        
+        uniform vec4 u_color;
+        
+        void main() {
+            gl_FragColor = u_color;
+        }
+    </script>    
 </body>
 </html>

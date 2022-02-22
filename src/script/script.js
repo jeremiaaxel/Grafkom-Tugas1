@@ -50,3 +50,12 @@ function init() {
 }
 
 window.onload = init
+
+var feedbackArea = document.getElementById("feedback-banner");
+var addModelButton = document.getElementById("add-model-button");
+addModelButton.addEventListener("click", function() {
+    var modelDropdown = document.getElementById("model-selector");
+    var selectedModel = modelDropdown.value;
+
+    feedbackArea.innerText = `Model ${selectedModel} added`;
+});
