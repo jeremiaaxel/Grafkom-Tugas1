@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="./styles/styles.css">
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
 <body>
@@ -24,27 +24,31 @@
     <main>
         <canvas id="gl-canvas" width="600" height="600"></canvas>
     </main>
-    <script src="script/script.js"></script>
     <!-- <script id="vertex-shader" type="notjs" src="shader/vertexShader.js"></script>
-    <script id="fragment-shader" type="notjs" src="shader/fragmentShader.js"></script> -->
+        <script id="fragment-shader" type="notjs" src="shader/fragmentShader.js"></script> -->
     <script id="vertex-shader" type="notjs">
-        attribute vec2 a_position;
+        attribute vec4 a_position;
+        attribute vec4 a_color;
 
-        uniform mat3 u_matrix;
+        uniform mat4 u_matrix;
+
+        varying vec4 v_color;
 
         void main() {
             // Multiply the position by the matrix.
-            gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+            gl_Position = a_position;
+            v_color = a_color;
         }
     </script>
     <script id="fragment-shader" type="notjs">
         precision mediump float;
         
-        uniform vec4 u_color;
+        varying vec4 v_color;
         
         void main() {
-            gl_FragColor = u_color;
+            gl_FragColor = v_color;
         }
     </script>    
+    <script src="./script/script.js"></script>
 </body>
 </html>
