@@ -100,6 +100,13 @@ function main() {
 
         render();
     });
+
+    var clearCanvasButton = document.getElementById("clear-canvas-button");
+    clearCanvasButton.addEventListener("click", function() {
+        clearCanvas();
+        render();
+        showFeedback("Canvas cleared");
+    });
     
 }
 
@@ -109,6 +116,14 @@ function clearScene() {
 
     resizeCanvas(canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+}
+
+function clearCanvas() {
+    positions = [];
+    colors = [];
+    n_items = 0;
+    offsets = [];
+    vetrices_nums = [];
 }
 
 function render() {
@@ -149,7 +164,8 @@ function render() {
             Color: ${colors.slice(offsets[i], offsets[i]+vetrices_nums[i]*color_dimensions)}
             `);
         }
-        gl.drawArrays(gl.LINES, offsets[i], vetrices_nums[i]);
+        let types = vetrices_nums[i] === 2 ? gl.LINES : gl.TRIANGLES;
+        gl.drawArrays(types, offsets[i], vetrices_nums[i]);
     }
 }
 
@@ -234,28 +250,57 @@ function euclideanDistance(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
 
-function addLine(x1 = -0.5, y1 = 0, x2 = 0.5, y2 = 0) {
-    vetrices_nums[n_items] = 2;
+function updateVariables(number_of_vetrices) {
+    vetrices_nums[n_items] = number_of_vetrices;
+    offsets[n_items] = n_items == 0 ? 0 : offsets[n_items-1] + vetrices_nums[n_items-1];
+}
 
-    if (n_items === 0) offsets[n_items] = 0;
-    else offsets[n_items] = offsets[n_items-1] + vetrices_nums[n_items-1];
+function addLine(x1 = -0.5, y1 = 0.8, x2 = 0.5, y2 = 0.8, color = [1, 0, 0]) {
+    let number_of_vetrices = 2;
+    updateVariables(number_of_vetrices);
     
     // positions
     positions.push(x1, y1);
     positions.push(x2, y2);
     // colors
-    colors.push(1,0,0);
-    colors.push(1,0,0);
+    for (let i = 0; i < number_of_vetrices; i++) {
+        colors.push(...color);
+    }
 
     n_items++;
 }
 
-function addSquare() {
-    console.log("square");
+function addSquare(x1 = 0.5, y1 = 0.5, x2 = -0.5, y2 = 0.5, x3 = -0.5, y3 = -0.5, x4 = 0.5, y4 = -0.5, color = [1, 0, 0]) {
+    let number_of_vetrices = 6;
+    updateVariables(number_of_vetrices);
+
+    // positions
+    positions.push(x1, y1);
+    positions.push(x2, y2);
+    positions.push(x3, y3);
+    positions.push(x1, y1);
+    positions.push(x4, y4);
+    positions.push(x3, y3);
+    // colors
+    for (let i = 0; i < number_of_vetrices; i++) {
+        colors.push(...color);
+    }
+
+    n_items++;
 }
 
-function addPolygon() {
-    console.log("polygon");
+function addPolygon(n_vertex = 5, color = [1, 0, 0]) {
+    let number_of_vetrices = 5;
+    updateVariables(number_of_vetrices);
+
+    // positions
+    for(let i=0;i<n_vertex;i++){
+        positions.push(Math.cos(2*Math.PI*i/n_vertex), Math.sin(2*Math.PI*i/n_vertex));
+    }
+    // colors
+    for(let i=0;i<n_vertex;i++){
+        colors.push(...color);
+    }
 }
 
 class ModelTypes {
