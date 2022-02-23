@@ -1,4 +1,4 @@
-const DEBUG = false;
+const DEBUG = true;
 let canvas = document.getElementById("gl-canvas");
 let gl;
 let program;
@@ -72,6 +72,10 @@ function init() {
 function showFeedback(text) {
     var feedbackArea = document.getElementById("feedback-banner");
     feedbackArea.innerText = text;
+    
+    setTimeout(function() {
+        feedbackArea.innerText = "";
+    }, 2000);
 }
 
 function main() {
@@ -155,7 +159,7 @@ function render() {
     let matrixLocation = gl.getUniformLocation(program, "u_matrix");
     gl.uniformMatrix3fv(matrixLocation, false, matrix);
 
-    if (DEBUG) console.log(`Item: ${n_items}`);
+    if (DEBUG) console.log(`Items exist: ${n_items}`);
     for(let i=0;i<n_items;i++){
         if(DEBUG) {
             console.log(`Item: ${i}\nOffset: ${offsets[i]}\nNum of vertex: ${vetrices_nums[i]}\n`);
@@ -164,7 +168,9 @@ function render() {
             Color: ${colors.slice(offsets[i], offsets[i]+vetrices_nums[i]*color_dimensions)}
             `);
         }
-        let types = vetrices_nums[i] === 2 ? gl.LINES : gl.TRIANGLES;
+        let types = gl.TRIANGLES;
+        if (vetrices_nums[i] === 2) types = gl.LINES;
+        else if (vetrices_nums[i] > 4) types = gl.TRIANGLE_FAN;
         gl.drawArrays(types, offsets[i], vetrices_nums[i]);
     }
 }
@@ -279,8 +285,8 @@ function addSquare(x1 = 0.5, y1 = 0.5, x2 = -0.5, y2 = 0.5, x3 = -0.5, y3 = -0.5
     positions.push(x2, y2);
     positions.push(x3, y3);
     positions.push(x1, y1);
-    positions.push(x4, y4);
     positions.push(x3, y3);
+    positions.push(x4, y4);
     // colors
     for (let i = 0; i < number_of_vetrices; i++) {
         colors.push(...color);
@@ -289,18 +295,29 @@ function addSquare(x1 = 0.5, y1 = 0.5, x2 = -0.5, y2 = 0.5, x3 = -0.5, y3 = -0.5
     n_items++;
 }
 
-function addPolygon(n_vertex = 5, color = [1, 0, 0]) {
-    let number_of_vetrices = 5;
+function addPolygon(n_vertex = 6, coordinates = [0.5, 0, 0, 0.5, -0.5, 0, -0.5, -0.5, 0, -0.8, 0.5,-0.5], color = [1, 0, 0]) {
+    let number_of_vetrices = 3 + (n_vertex-3)*3;
     updateVariables(number_of_vetrices);
 
     // positions
-    for(let i=0;i<n_vertex;i++){
-        positions.push(Math.cos(2*Math.PI*i/n_vertex), Math.sin(2*Math.PI*i/n_vertex));
+    for(let i=0;i<n_vertex*2;i+=2){
+        if(Math.floor(i/2) >= 3) {
+            positions.push(coordinates[0], coordinates[0+1]);
+            positions.push(coordinates[i-2], coordinates[i-1]);
+        }
+        positions.push(coordinates[i], coordinates[i+1]);
+    
     }
+    
     // colors
-    for(let i=0;i<n_vertex;i++){
+    for(let i=0;i<n_vertex*2;i++){
+        if (Math.floor(i/2) >= 3) {
+            colors.push(...color);
+            colors.push(...color);
+        }
         colors.push(...color);
     }
+    n_items++;
 }
 
 class ModelTypes {
