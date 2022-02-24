@@ -24,7 +24,7 @@
   }
   
 
-body {
+.content {
   display: flex;
   flex-direction: row;
 }
@@ -33,25 +33,69 @@ body {
   width: 20%;
   display: flex;
   flex-direction: column;
-  background-color: gainsboro;
+  
+  background-color: #DADBBD;
   padding: 1rem;
 }
 
+button.active, button:active {
+  background-color: #151D3B;
+  color: white;
+}
+
 #model-selector {
+  display: flex;
+  flex-direction: column;
   width: 100%;
 }
 
-#sidebar button {
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
-  margin-top: 0.5rem;
-  background-color: aquamarine;
+#model-selector>button {
+  width: 5rem;
+  height: 5rem;
+}
+
+#sides-input {
+  width: 100%;
+}
+
+#topbar {
+  padding: 1rem;
+  width: 100%;
+  height: 4rem;
+  background-color: #DADBBD;
+}
+
+.btn {
+  padding: 0.5rem;
   border-radius: 7px;
+  border: none;
   cursor: pointer;
 }
 
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-alert {
+  background-color: #dc3545;
+  color: white;
+  font-weight: bold;
+}
+
+#model-selector>button {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  margin-top: 0.5rem;
+}
+
 #feedback-banner {
-  margin-top: 1rem;
+  background-color: #eff0d8;
+  height: 1rem;
+  box-sizing: content-box;
+  padding: 0.5rem;
+  border-radius: 5px;
   word-wrap: break-word;
   font-size: small;
+  margin-bottom: 1rem;
 }

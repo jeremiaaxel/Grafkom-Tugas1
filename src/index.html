@@ -8,26 +8,31 @@
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
 <body>
-    <div id="sidebar">
-        <div class="model-selector">
-            <label for="model-selector">Model</label>
-            <select name="model-selector" id="model-selector">
-                <option value="line">Line</option>
-                <option value="square">Square</option>
-                <option value="rectangle">Rectangle</option>
-                <option value="polygon">Polygon</option>
-            </select>
-            <div id="sides-input" style="display: none;">
-                <label for="sides">Polygon sides</label>
-                <input type="number" name="sides" id="sides" value="3" min="3" max="10">
+    <div class="" id="topbar">
+        <button class="btn btn-alert" id="clear-canvas-button">Clear Canvas</button>
+        <span id="instruction-banner">Click on the canvas to draw!</span>
+    </div>
+    <div class="content">
+        <div id="sidebar">
+            <div class="model-selector">
+                <div id="feedback-banner"></div>
+                <div for="model-selector">Select model</div>
+                <div name="model-selector" id="model-selector">
+                    <button onclick="selectModel(this)" value="line" class="btn btn-primary model-selector-button" id="line" class="active">Line</button>
+                    <button onclick="selectModel(this)" value="square" class="btn btn-primary model-selector-button" id="square">Square</button>
+                    <button onclick="selectModel(this)" value="rectangle" class="btn btn-primary model-selector-button" id="rectangle">Rectangle</button>
+                    <button onclick="selectModel(this)" value="polygon" class="btn btn-primary model-selector-button" id="polygon">Polygon</button>
+                </div>
+                <div id="sides-input" style="display: none;">
+                    <label for="sides">Polygon sides</label>
+                    <input type="number" name="sides" id="sides" value="3" min="3" max="10">
+                </div>
             </div>
         </div>
-        <button id="add-model-button" type="button" value="add">Add</button>
-        <span id="feedback-banner"></span>
+        <main>
+            <canvas id="gl-canvas" width="600" height="600"></canvas>
+        </main>
     </div>
-    <main>
-        <canvas id="gl-canvas" width="600" height="600"></canvas>
-    </main>
     <script src="script/script.js"></script>
     <script id="vertex-shader" type="notjs">
         attribute vec4 a_position;

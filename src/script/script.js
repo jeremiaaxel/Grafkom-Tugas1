@@ -1,12 +1,18 @@
+// programs
 let canvas = document.getElementById("gl-canvas");
 let gl;
 let program;
 
+let position = []; // vertex buffer
+let color = []; // fragment buffer
+
+// model selection
+let selectedModel;
+
+// drawing
 let isMouseClicked = false;
 let isShouldDrawPolygon = false;
 
-let position = []; // vertex buffer
-let color = []; // fragment buffer
 
 let totalPointsCreated = 0;
 let nObjectsCreated = -1;
@@ -24,6 +30,8 @@ const DrawMode = {
   rectangle: "rectangle",
   polygon: "polygon",
 };
+
+/********* PROGRAM RELATED FUNCTIONS ************/
 
 // return a shader
 function createShader(gl, type, source) {
@@ -53,6 +61,51 @@ function resizeCanvas(canvas) {
     canvas.height = displayHeight;
   }
 }
+
+
+/********* USER INTERFACE RELATED FUNCTIONS ************/
+
+function clearCanvas() {
+  position = [];
+  color = [];
+  totalPointsCreated = 0;
+  nObjectsCreated = -1;
+  currentObjectIndexStart = [];
+  pointsForCurrentObject = [];
+};
+
+function showFeedback(text, timeout = null){
+  var feedbackArea = document.getElementById("feedback-banner");
+  feedbackArea.innerHTML = text;
+  if (timeout) {
+    setTimeout(() => {
+      feedbackArea.innerHTML = "";
+    }, timeout);
+  }
+}
+
+function selectModel(elem) {
+  var selectorButtons = document.getElementsByClassName("model-selector-button");
+  selectedModel = elem.value.toLowerCase();
+
+  for (let i = 0; i < selectorButtons.length; i++) {
+    selectorButtons[i].classList.remove("active");
+  }
+  elem.classList.add("active");
+
+  showFeedback(`Model ${selectedModel} added`, 2000);
+  
+  let sidesInput = document.getElementById("sides-input");
+  if (selectedModel == DrawMode.polygon) sidesInput.style.display = "block";
+  else sidesInput.style.display = "none";
+
+  sidesInput.addEventListener("change", function () {
+    console.log(sidesInput.lastElementChild);
+    nPolygonSide = sidesInput.lastElementChild.value
+  })
+}
+
+/********* DRAWING UTILITY FUNCTIONS ************/
 
 function getMousePositionRelativeToCanvas(canvas, event) {
   let rect = canvas.getBoundingClientRect();
@@ -169,6 +222,7 @@ function drawSquareSides(mousePosition) {
     }
   }
 }
+
 function drawSquare(mousePosition) {
   if (pointsForCurrentObject[nObjectsCreated] == 16) {
     for (let i = 0; i < 7; i++) {
@@ -255,6 +309,8 @@ function drawScene(mousePosition, polygonSide, selectedModel){
   }
 }
 
+/********* MAIN PROGRAM ************/
+
 function init() {
   gl = canvas.getContext("webgl");
 
@@ -318,29 +374,15 @@ function render() {
 }
 
 function main() {
+  
   init();
 
-  var feedbackArea = document.getElementById("feedback-banner");
-  var addModelButton = document.getElementById("add-model-button");
-  let selectedModel;
-  let sidesInput = document.getElementById("sides-input");
-  addModelButton.addEventListener("click", function () {
-    var modelDropdown = document.getElementById("model-selector");
-    selectedModel = modelDropdown.value.toLowerCase();
-    feedbackArea.innerText = `Model ${selectedModel} added`;
-
-    if(selectedModel == DrawMode.polygon){
-      sidesInput.style.display = "block";
-    }else {
-      sidesInput.style.display = "none";
-    }
-    
+  const clearCanvasButton = document.getElementById("clear-canvas-button");
+  clearCanvasButton.addEventListener("click", function () {
+    clearCanvas()
+    render();
+    showFeedback("Canvas cleared", 2000);
   });
-
-  sidesInput.addEventListener("change", function () {
-    console.log(sidesInput.lastElementChild);
-    nPolygonSide = sidesInput.lastElementChild.value
-  })
 
   canvas.addEventListener("mousedown", function (event) {
     isMouseClicked = true;
