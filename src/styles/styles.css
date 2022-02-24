@@ -43,6 +43,14 @@ button.active, button:active {
   color: white;
 }
 
+#clear-canvas-button {
+  flex-shrink: 0;
+}
+
+.model-selector {
+  margin-top: 0.5rem;
+}
+
 #model-selector {
   display: flex;
   flex-direction: column;
@@ -59,6 +67,9 @@ button.active, button:active {
 }
 
 #topbar {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
   padding: 1rem;
   width: 100%;
   height: 4rem;
@@ -90,12 +101,23 @@ button.active, button:active {
 }
 
 #feedback-banner {
+  word-wrap: break-word;
+  font-size: small;
+  margin-bottom: 1rem;
+}
+
+#instruction-banner {
+  flex-grow: 1;
+}
+
+.banner {
   background-color: #eff0d8;
   height: 1rem;
   box-sizing: content-box;
   padding: 0.5rem;
   border-radius: 5px;
-  word-wrap: break-word;
-  font-size: small;
-  margin-bottom: 1rem;
+}
+
+.w-100 {
+  width: 100%;
 }

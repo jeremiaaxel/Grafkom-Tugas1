@@ -8,6 +8,7 @@ let color = []; // fragment buffer
 
 // model selection
 let selectedModel;
+let selectedColor;
 
 // drawing
 let isMouseClicked = false;
@@ -86,6 +87,8 @@ function showFeedback(text, timeout = null){
 
 function selectModel(elem) {
   var selectorButtons = document.getElementsByClassName("model-selector-button");
+  var instructionBanner = document.getElementById("instruction-banner");
+
   selectedModel = elem.value.toLowerCase();
 
   for (let i = 0; i < selectorButtons.length; i++) {
@@ -93,14 +96,19 @@ function selectModel(elem) {
   }
   elem.classList.add("active");
 
-  showFeedback(`Model ${selectedModel} added`, 2000);
+  showFeedback(`Model ${selectedModel} selected`, 2000);
   
   let sidesInput = document.getElementById("sides-input");
-  if (selectedModel == DrawMode.polygon) sidesInput.style.display = "block";
-  else sidesInput.style.display = "none";
+  if (selectedModel == DrawMode.polygon) {
+    sidesInput.style.display = "block";
+    instructionBanner.innerText = "Click on the canvas to put the nodes";
+  } 
+  else {
+    sidesInput.style.display = "none";
+    instructionBanner.innerText = "Click and drag on the canvas to draw";
+  } 
 
   sidesInput.addEventListener("change", function () {
-    console.log(sidesInput.lastElementChild);
     nPolygonSide = sidesInput.lastElementChild.value
   })
 }
@@ -126,8 +134,8 @@ function getMousePositionRelativeToCanvas(canvas, event) {
 function createPoint(x, y) {
   position.push(x, y);
 
-  color.push(255, 0, 0);
-  color.push(255, 0, 0);
+  color.push(selectedColor.r, selectedColor.g, selectedColor.b);
+  color.push(selectedColor.r, selectedColor.g, selectedColor.b);
 
   pointsForCurrentObject[nObjectsCreated] += 2;
   totalPointsCreated += 1;
@@ -309,6 +317,15 @@ function drawScene(mousePosition, polygonSide, selectedModel){
   }
 }
 
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
 /********* MAIN PROGRAM ************/
 
 function init() {
@@ -382,6 +399,12 @@ function main() {
     clearCanvas()
     render();
     showFeedback("Canvas cleared", 2000);
+  });
+
+  const colorSelector = document.getElementById("color-selector");
+  selectedColor = hexToRgb(colorSelector.value);
+  colorSelector.addEventListener('change', function() {
+    selectedColor = hexToRgb(colorSelector.value);
   });
 
   canvas.addEventListener("mousedown", function (event) {
