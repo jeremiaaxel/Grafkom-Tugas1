@@ -1,61 +1,363 @@
 let canvas = document.getElementById("gl-canvas");
+let gl;
+let program;
+
+let isMouseClicked = false;
+let isShouldDrawPolygon = false;
+
+let position = []; // vertex buffer
+let color = []; // fragment buffer
+
+let totalPointsCreated = 0;
+let nObjectsCreated = -1;
+let currentObjectIndexStart = [];
+let pointsForCurrentObject = [];
+let nPolygonSide = 3;
+let polygonStartPosition = {
+  x: 0,
+  y: 0,
+}
+
+const DrawMode = {
+  line: "line",
+  square: "square",
+  rectangle: "rectangle",
+  polygon: "polygon",
+};
 
 // return a shader
-function createShader(gl, type, source){
-    let shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-  
-    return shader;
-  }
-  
-  // return a shader program
-function createProgram(gl, vertex, fragment){
-    let program = gl.createProgram();
-    gl.attachShader(program, vertex);
-    gl.attachShader(program, fragment);
-    gl.linkProgram(program);
+function createShader(gl, type, source) {
+  let shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
 
-    return program;
+  return shader;
+}
+
+// return a shader program
+function createProgram(gl, vertex, fragment) {
+  let program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+
+  return program;
 }
 
 // canvas resizing
 function resizeCanvas(canvas) {
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-    if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
+  const displayWidth = canvas.clientWidth;
+  const displayHeight = canvas.clientHeight;
+  if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+  }
+}
+
+function getMousePositionRelativeToCanvas(canvas, event) {
+  let rect = canvas.getBoundingClientRect();
+  let position = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+
+  position.x = (position.x * canvas.width) / canvas.clientWidth;
+  position.y = (position.y * canvas.height) / canvas.clientHeight;
+
+  position.x = (position.x / gl.canvas.width) * 2 - 1;
+  position.y = (position.y / gl.canvas.height) * -2 + 1;
+
+  return position;
+}
+
+function createPoint(x, y) {
+  position.push(x, y);
+
+  color.push(255, 0, 0);
+  color.push(255, 0, 0);
+
+  pointsForCurrentObject[nObjectsCreated] += 2;
+  totalPointsCreated += 1;
+
+  render();
+}
+
+function initPoint(mousePosition, polygonSide, selectedModel){
+  if (
+    selectedModel == DrawMode.polygon &&
+    pointsForCurrentObject[nObjectsCreated] < polygonSide * 4 &&
+    isShouldDrawPolygon
+  ) {
+    drawPolygon(mousePosition, nPolygonSide);
+  } else if (
+    !(selectedModel == DrawMode.polygon) ||
+    (selectedModel == DrawMode.polygon &&
+      !pointsForCurrentObject[nObjectsCreated] &&
+      nObjectsCreated == -1) ||
+    (selectedModel == DrawMode.polygon &&
+      pointsForCurrentObject[nObjectsCreated])
+  ) {
+    nObjectsCreated++;
+    currentObjectIndexStart[nObjectsCreated] = totalPointsCreated;
+    pointsForCurrentObject[nObjectsCreated] = 0;
+    createPoint(mousePosition.x, mousePosition.y);
+    polygonStartPosition = mousePosition
+    isShouldDrawPolygon = true
+  }
+}
+
+
+function createLine(a, b) {
+  createPoint(a[0], a[1]);
+  createPoint(b[0], b[1]);
+}
+
+function eraseLastDrawnPoint() {
+  for (let i = 0; i < 2; i++) {
+    position.pop();
+    for (let j = 0; j < 3; j++) {
+      color.pop();
     }
+  }
+  pointsForCurrentObject[nObjectsCreated] -= 2;
+  totalPointsCreated -= 1;
+}
+
+function drawLine(mousePosition) {
+  if (pointsForCurrentObject[nObjectsCreated] == 4) {
+    eraseLastDrawnPoint();
+    createPoint(mousePosition.x, mousePosition.y);
+  } else {
+    createPoint(mousePosition.x, mousePosition.y);
+  }
+}
+
+function drawSquareSides(mousePosition) {
+  let latestPosition = {
+    x0: position[position.length - 2],
+    y0: position[position.length - 1],
+  };
+
+  let { x, y } = mousePosition;
+  let { x0, y0 } = latestPosition;
+
+  let abs = Math.abs;
+  let max = Math.max(abs(x - x0), abs(y - y0));
+  if (x0 > x) {
+    if (y0 > y) {
+      createPoint(x0 - max, y0);
+      createLine([x0 - max, y0], [x0 - max, y0 - max]);
+      createLine([x0 - max, y0 - max], [x0, y0 - max]);
+      createLine([x0, y0 - max], [x0, y0]);
+    } else {
+      createPoint(x0, y0 + max);
+      createLine([x0, y0 + max], [x0 - max, y0 + max]);
+      createLine([x0 - max, y0 + max], [x0 - max, y0]);
+      createLine([x0 - max, y0], [x0, y0]);
+    }
+  } else {
+    if (y0 > y) {
+      createPoint(x0 + max, y0);
+      createLine([x0 + max, y0], [x0 + max, y0 - max]);
+      createLine([x0 + max, y0 - max], [x0, y0 - max]);
+      createLine([x0, y0 - max], [x0, y0]);
+    } else {
+      createPoint(x0 + max, y0);
+      createLine([x0 + max, y0], [x0 + max, y0 + max]);
+      createLine([x0 + max, y0 + max], [x0, y0 + max]);
+      createLine([x0, y0 + max], [x0, y0]);
+    }
+  }
+}
+function drawSquare(mousePosition) {
+  if (pointsForCurrentObject[nObjectsCreated] == 16) {
+    for (let i = 0; i < 7; i++) {
+      eraseLastDrawnPoint();
+    }
+    drawSquareSides(mousePosition);
+  } else {
+    drawSquareSides(mousePosition);
+  }
+}
+
+function drawRectangleSides(mousePosition) {
+  let latestPosition = {
+    x0: position[position.length - 2],
+    y0: position[position.length - 1],
+  };
+
+  let { x, y } = mousePosition;
+  let { x0, y0 } = latestPosition;
+
+  createPoint(x0, y);
+  createLine([x0, y], [x, y]);
+  createLine([x, y], [x, y0]);
+  createLine([x, y0], [x0, y0]);
+}
+
+function drawRectangle(mousePosition) {
+  if (pointsForCurrentObject[nObjectsCreated] == 16) {
+    for (let i = 0; i < 7; i++) {
+      pointsForCurrentObject[nObjectsCreated];
+      eraseLastDrawnPoint();
+    }
+    drawRectangleSides(mousePosition);
+  } else {
+    drawRectangleSides(mousePosition);
+  }
+}
+
+function drawPolygon(mousePosition, side) {
+  if (
+    (pointsForCurrentObject[nObjectsCreated] / 2) % 2 !== 2 &&
+    pointsForCurrentObject[nObjectsCreated]
+  ) {
+    createPoint(mousePosition.x, mousePosition.y);
+  }
+  if (pointsForCurrentObject[nObjectsCreated] == side * 4 - 2) {
+    isShouldDrawPolygon = false
+    createPoint(
+      polygonStartPosition.x, polygonStartPosition.y
+    );
+  }
+}
+
+function drawDraggablePolygonSide(mousePosition) {
+  if ((pointsForCurrentObject[nObjectsCreated] / 2) % 2 == 1) {
+    createPoint(mousePosition.x, mousePosition.y);
+  } else {
+    eraseLastDrawnPoint();
+    createPoint(mousePosition.x, mousePosition.y);
+  }
+}
+
+function drawScene(mousePosition, polygonSide, selectedModel){
+  if (
+    selectedModel == DrawMode.polygon &&
+    pointsForCurrentObject[nObjectsCreated] &&
+    pointsForCurrentObject[nObjectsCreated] <= polygonSide * 4 - 4 &&
+    isShouldDrawPolygon
+  ) {
+    drawDraggablePolygonSide(mousePosition);
+  }
+  if (isMouseClicked) {
+    switch (selectedModel) {
+      case DrawMode.line:
+        drawLine(mousePosition);
+        break;
+      case DrawMode.square:
+        drawSquare(mousePosition);
+        break;
+      case DrawMode.rectangle:
+        drawRectangle(mousePosition);
+        break;
+    }
+  }
 }
 
 function init() {
-    gl = canvas.getContext("webgl");
+  gl = canvas.getContext("webgl");
 
-    let vertexShaderSource = document.getElementById("vertex-shader").text;
-    let fragmentShaderSource = document.getElementById("fragment-shader").text;
+  let vertexShaderSource = document.getElementById("vertex-shader").text;
+  let fragmentShaderSource = document.getElementById("fragment-shader").text;
 
-    let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    let fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+  let vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+  let fragmentShader = createShader(
+    gl,
+    gl.FRAGMENT_SHADER,
+    fragmentShaderSource
+  );
 
-    program = createProgram(gl, vertexShader, fragmentShader);
+  program = createProgram(gl, vertexShader, fragmentShader);
 
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(program);
+  gl.useProgram(program);
 
-    resizeCanvas(canvas);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  resizeCanvas(canvas);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 }
 
-window.onload = init
+function render() {
+  let colorNormalized = color.map((c) => (c - 255) / 255 + 1);
 
-var feedbackArea = document.getElementById("feedback-banner");
-var addModelButton = document.getElementById("add-model-button");
-addModelButton.addEventListener("click", function() {
+  gl.useProgram(program);
+  resizeCanvas(canvas);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  let positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(position), gl.STATIC_DRAW);
+
+  let colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(colorNormalized),
+    gl.STATIC_DRAW
+  );
+
+  let positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  let colorAttributeLocation = gl.getAttribLocation(program, "a_color");
+  gl.enableVertexAttribArray(colorAttributeLocation);
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+  for (let i = 0; i <= nObjectsCreated; i++) {
+    gl.drawArrays(
+      gl.LINES,
+      currentObjectIndexStart[i],
+      pointsForCurrentObject[i] / 2
+    );
+  }
+}
+
+function main() {
+  init();
+
+  var feedbackArea = document.getElementById("feedback-banner");
+  var addModelButton = document.getElementById("add-model-button");
+  let selectedModel;
+  let sidesInput = document.getElementById("sides-input");
+  addModelButton.addEventListener("click", function () {
     var modelDropdown = document.getElementById("model-selector");
-    var selectedModel = modelDropdown.value;
-
+    selectedModel = modelDropdown.value.toLowerCase();
     feedbackArea.innerText = `Model ${selectedModel} added`;
-});
+
+    if(selectedModel == DrawMode.polygon){
+      sidesInput.style.display = "block";
+    }else {
+      sidesInput.style.display = "none";
+    }
+    
+  });
+
+  sidesInput.addEventListener("change", function () {
+    console.log(sidesInput.lastElementChild);
+    nPolygonSide = sidesInput.lastElementChild.value
+  })
+
+  canvas.addEventListener("mousedown", function (event) {
+    isMouseClicked = true;
+    let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
+    initPoint(mousePosition, nPolygonSide, selectedModel);
+
+  });
+
+  canvas.addEventListener("mouseup", function () {
+    isMouseClicked = false;
+  });
+
+  canvas.addEventListener("mousemove", function (event) {
+    let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
+    drawScene(mousePosition, nPolygonSide, selectedModel);
+    
+  });
+}
+
+window.onload = main;
