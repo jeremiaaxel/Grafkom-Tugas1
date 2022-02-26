@@ -7,14 +7,13 @@
     <link rel="stylesheet" href="styles/styles.css">
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
-<body>
+<body class="bg-primary">
     <div class="" id="topbar">
         <button class="btn btn-alert" id="clear-canvas-button">Clear Canvas</button>
-        <span id="instruction-banner" class="banner w-100">Click on the canvas to draw!</span>
+        <span id="instruction-banner" class="banner bg-secondary w-100">Click on the canvas to draw!</span>
     </div>
     <div class="content">
         <div id="sidebar">
-            <div id="feedback-banner" class="banner"></div>
             <div for="model-selector">Color:</div>
             <input type="color" id="color-selector">
             <div class="model-selector">
@@ -34,6 +33,16 @@
         <main>
             <canvas id="gl-canvas" width="600" height="600"></canvas>
         </main>
+        <div class="" id="right-side">
+            <div id="feedback-banner" class="banner bg-secondary"></div>
+            <div id="drawn-objects-container" class="bg-secondary">
+                <div id="drawn-objects-header">
+                    <h3>Drawn objects</h3>
+                </div>
+                <div id="drawn-objects-list">
+                </div>
+            </div>
+        </div>
     </div>
     <script src="script/script.js"></script>
     <script id="vertex-shader" type="notjs">

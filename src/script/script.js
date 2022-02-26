@@ -1,10 +1,71 @@
+const DrawMode = {
+  line: "line",
+  square: "square",
+  rectangle: "rectangle",
+  polygon: "polygon",
+};
+
+class Vertex {
+  x = 0;
+  y = 0;
+  color = hexToRgb("#000000");
+
+  constructor(vertex) {
+    if (vertex) {
+      this.x = vertex.x;
+      this.y = vertex.y;
+      this.color = vertex.color;
+    }
+  }
+
+  setX(x) { this.x = x; }
+  setY(y) { this.y = y; }
+  getX() { return this.x; }
+  getY() { return this.y; }
+
+  setColor(color) { this.color = color; }
+  getColor() { return this.color; }
+}
+
+class DrawObject {
+  modelType = "";
+  vetrices = [];
+
+  constructor(DrawObject) {
+    if (DrawObject) {
+      this.modelType = DrawObject.modelType;
+      this.vetrices = DrawObject.vetrices;
+    }
+  }
+
+  set modelType(model) { this.modelType = model; }
+  set vetrices(newVetrices) { this.vetrices = newVetrices; }
+  
+  get vetrices() { return this.vetrices; }
+  get length() { return this.vetrices.length; }
+  get modelType() { return this.modelType; }
+
+  add(newVertex) { this.vetrices.push(new Vertex(newVertex)); }
+  getVertex(index) { return new Vertex(this.vetrices[index]); }
+  setColor(color) { this.vetrices.forEach(vertex => vertex.setColor(color)); }
+
+  clear() { this.vetrices = []; }
+
+  removeLastVertex() {
+    if (this.vetrices.length > 0) this.vetrices.pop();
+  }
+}
+
 // programs
 let canvas = document.getElementById("gl-canvas");
 let gl;
 let program;
 
-let position = []; // vertex buffer
-let color = []; // fragment buffer
+// let position = []; // vertex buffer
+// let color = []; // fragment buffer
+
+let selectedObject = new DrawObject() ; // a DrawnObject, 'current' selected object
+let objectsList = []; // list of DrawnObject
 
 // model selection
 let selectedModel;
@@ -24,13 +85,6 @@ let polygonStartPosition = {
   x: 0,
   y: 0,
 }
-
-const DrawMode = {
-  line: "line",
-  square: "square",
-  rectangle: "rectangle",
-  polygon: "polygon",
-};
 
 /********* PROGRAM RELATED FUNCTIONS ************/
 
@@ -67,12 +121,8 @@ function resizeCanvas(canvas) {
 /********* USER INTERFACE RELATED FUNCTIONS ************/
 
 function clearCanvas() {
-  position = [];
-  color = [];
-  totalPointsCreated = 0;
-  nObjectsCreated = -1;
-  currentObjectIndexStart = [];
-  pointsForCurrentObject = [];
+  objectsList = [];
+  selectedObject = new DrawObject();
 };
 
 function showFeedback(text, timeout = null){
@@ -113,6 +163,29 @@ function selectModel(elem) {
   })
 }
 
+function showDrawnObjects() {
+  var drawnObjectsBar = document.getElementById("drawn-objects-list");
+  drawnObjectsBar.innerHTML = "";
+
+  objectsList.forEach((object, index) => {
+    let li = document.createElement("li");
+    li.classList.add("no-bullet");
+    li.innerHTML = `<div id="drawn-object-item-${index}" class="drawn-object-item"><div class="drawn-object-index">${index}</div><div class="drawn-object-title">${object.modelType}</div><input type="color" id="drawn-object-color-${index}" value="${colorToHex(object.getVertex(0).getColor())}" /></div>`;
+    drawnObjectsBar.appendChild(li);
+  });
+}
+
+function updateDrawnColor() {
+  objectsList.forEach((drawnObject, index) => {
+    console.log(drawnObject);
+    var searchQuery = "drawn-object-color-" + index;
+    var drawnObjectColor = document.getElementById(searchQuery);
+    drawnObjectColor.addEventListener('change', function() {
+      drawnObject.setColor(hexToRgb(drawnObjectColor.value));
+      render();
+    });
+  });
+}
 /********* DRAWING UTILITY FUNCTIONS ************/
 
 function getMousePositionRelativeToCanvas(canvas, event) {
@@ -132,39 +205,61 @@ function getMousePositionRelativeToCanvas(canvas, event) {
 }
 
 function createPoint(x, y) {
-  position.push(x, y);
+  var vertex = new Vertex();
+  vertex.setX(x);
+  vertex.setY(y);
+  vertex.setColor(selectedColor);
 
-  color.push(selectedColor.r, selectedColor.g, selectedColor.b);
-  color.push(selectedColor.r, selectedColor.g, selectedColor.b);
+  if (selectedObject === undefined) selectedObject = new DrawObject();
+  selectedObject.modelType = selectedModel;
+  selectedObject.add(vertex);
 
-  pointsForCurrentObject[nObjectsCreated] += 2;
-  totalPointsCreated += 1;
+  // position.push(x, y);
+
+  // color.push(selectedColor.r, selectedColor.g, selectedColor.b);
+  // color.push(selectedColor.r, selectedColor.g, selectedColor.b);
+
+  // pointsForCurrentObject[nObjectsCreated] += 2;
+  // totalPointsCreated += 1;
 
   render();
 }
 
 function initPoint(mousePosition, polygonSide, selectedModel){
-  if (
-    selectedModel == DrawMode.polygon &&
-    pointsForCurrentObject[nObjectsCreated] < polygonSide * 4 &&
-    isShouldDrawPolygon
-  ) {
-    drawPolygon(mousePosition, nPolygonSide);
+  
+  if (isShouldDrawPolygon && selectedModel === DrawMode.polygon && selectedObject.length < polygonSide * 2) { // 2 vertex for each side
+    // if current object is not empty, add a point to the last vertex
+    drawPolygon(mousePosition, polygonSide);
   } else if (
-    !(selectedModel == DrawMode.polygon) ||
-    (selectedModel == DrawMode.polygon &&
-      !pointsForCurrentObject[nObjectsCreated] &&
-      nObjectsCreated == -1) ||
-    (selectedModel == DrawMode.polygon &&
-      pointsForCurrentObject[nObjectsCreated])
+    selectedModel !== DrawMode.polygon ||
+    (selectedModel === DrawMode.polygon && selectedObject.length === 0)
   ) {
-    nObjectsCreated++;
-    currentObjectIndexStart[nObjectsCreated] = totalPointsCreated;
-    pointsForCurrentObject[nObjectsCreated] = 0;
     createPoint(mousePosition.x, mousePosition.y);
-    polygonStartPosition = mousePosition
-    isShouldDrawPolygon = true
+    polygonStartPosition = mousePosition;
+    isShouldDrawPolygon = true;
   }
+
+  // if (
+  //   selectedModel == DrawMode.polygon &&
+  //   pointsForCurrentObject[nObjectsCreated] < polygonSide * 4 &&
+  //   isShouldDrawPolygon
+  // ) {
+  //   drawPolygon(mousePosition, nPolygonSide);
+  // } else if (
+  //   !(selectedModel == DrawMode.polygon) ||
+  //   (selectedModel == DrawMode.polygon &&
+  //     !pointsForCurrentObject[nObjectsCreated] &&
+  //     nObjectsCreated == -1) ||
+  //   (selectedModel == DrawMode.polygon &&
+  //     pointsForCurrentObject[nObjectsCreated])
+  // ) {
+  //   nObjectsCreated++;
+  //   currentObjectIndexStart[nObjectsCreated] = totalPointsCreated;
+  //   pointsForCurrentObject[nObjectsCreated] = 0;
+  //   createPoint(mousePosition.x, mousePosition.y);
+  //   polygonStartPosition = mousePosition
+  //   isShouldDrawPolygon = true
+  // }
 }
 
 
@@ -173,6 +268,7 @@ function createLine(a, b) {
   createPoint(b[0], b[1]);
 }
 
+// harusnya udah ga kepake
 function eraseLastDrawnPoint() {
   for (let i = 0; i < 2; i++) {
     position.pop();
@@ -185,25 +281,24 @@ function eraseLastDrawnPoint() {
 }
 
 function drawLine(mousePosition) {
-  if (pointsForCurrentObject[nObjectsCreated] == 4) {
-    eraseLastDrawnPoint();
-    createPoint(mousePosition.x, mousePosition.y);
-  } else {
-    createPoint(mousePosition.x, mousePosition.y);
-  }
+  if (selectedObject.length === 2) selectedObject.removeLastVertex();
+  createPoint(mousePosition.x, mousePosition.y);
+
+  // if (pointsForCurrentObject[nObjectsCreated] == 4) {
+  //   eraseLastDrawnPoint();
+  //   createPoint(mousePosition.x, mousePosition.y);
+  // } else {
+  //   createPoint(mousePosition.x, mousePosition.y);
+  // }
 }
 
 function drawSquareSides(mousePosition) {
-  let latestPosition = {
-    x0: position[position.length - 2],
-    y0: position[position.length - 1],
-  };
+  let x0 = selectedObject.getVertex(0).x;
+  let y0 = selectedObject.getVertex(0).y;
 
   let { x, y } = mousePosition;
-  let { x0, y0 } = latestPosition;
 
-  let abs = Math.abs;
-  let max = Math.max(abs(x - x0), abs(y - y0));
+  let max = Math.max(Math.abs(x - x0), Math.abs(y - y0));
   if (x0 > x) {
     if (y0 > y) {
       createPoint(x0 - max, y0);
@@ -229,77 +324,156 @@ function drawSquareSides(mousePosition) {
       createLine([x0, y0 + max], [x0, y0]);
     }
   }
+
+  // let latestPosition = {
+  //   x0: position[position.length - 2],
+  //   y0: position[position.length - 1],
+  // };
+
+  // let { x, y } = mousePosition;
+  // let { x0, y0 } = latestPosition;
+
+  // let abs = Math.abs;
+  // let max = Math.max(abs(x - x0), abs(y - y0));
+  // if (x0 > x) {
+  //   if (y0 > y) {
+  //     createPoint(x0 - max, y0);
+  //     createLine([x0 - max, y0], [x0 - max, y0 - max]);
+  //     createLine([x0 - max, y0 - max], [x0, y0 - max]);
+  //     createLine([x0, y0 - max], [x0, y0]);
+  //   } else {
+  //     createPoint(x0, y0 + max);
+  //     createLine([x0, y0 + max], [x0 - max, y0 + max]);
+  //     createLine([x0 - max, y0 + max], [x0 - max, y0]);
+  //     createLine([x0 - max, y0], [x0, y0]);
+  //   }
+  // } else {
+  //   if (y0 > y) {
+  //     createPoint(x0 + max, y0);
+  //     createLine([x0 + max, y0], [x0 + max, y0 - max]);
+  //     createLine([x0 + max, y0 - max], [x0, y0 - max]);
+  //     createLine([x0, y0 - max], [x0, y0]);
+  //   } else {
+  //     createPoint(x0 + max, y0);
+  //     createLine([x0 + max, y0], [x0 + max, y0 + max]);
+  //     createLine([x0 + max, y0 + max], [x0, y0 + max]);
+  //     createLine([x0, y0 + max], [x0, y0]);
+  //   }
+  // }
 }
 
 function drawSquare(mousePosition) {
-  if (pointsForCurrentObject[nObjectsCreated] == 16) {
-    for (let i = 0; i < 7; i++) {
-      eraseLastDrawnPoint();
-    }
-    drawSquareSides(mousePosition);
-  } else {
-    drawSquareSides(mousePosition);
+  if (selectedObject.length === 4 * 2) { // 2 points for each side
+    
+    [...Array(7)].forEach(() => {
+      selectedObject.removeLastVertex();
+    });
   }
+
+  drawSquareSides(mousePosition);
+
+  // if (pointsForCurrentObject[nObjectsCreated] == 16) {
+  //   for (let i = 0; i < 7; i++) {
+  //     eraseLastDrawnPoint();
+  //   }
+  //   drawSquareSides(mousePosition);
+  // } else {
+  //   drawSquareSides(mousePosition);
+  // }
 }
 
 function drawRectangleSides(mousePosition) {
-  let latestPosition = {
-    x0: position[position.length - 2],
-    y0: position[position.length - 1],
-  };
+  let x0 = selectedObject.getVertex(0).x;
+  let y0 = selectedObject.getVertex(0).y;
 
   let { x, y } = mousePosition;
-  let { x0, y0 } = latestPosition;
 
   createPoint(x0, y);
   createLine([x0, y], [x, y]);
   createLine([x, y], [x, y0]);
   createLine([x, y0], [x0, y0]);
+
+  // let latestPosition = {
+  //   x0: position[position.length - 2],
+  //   y0: position[position.length - 1],
+  // };
+
+  // let { x, y } = mousePosition;
+  // let { x0, y0 } = latestPosition;
+
+  // createPoint(x0, y);
+  // createLine([x0, y], [x, y]);
+  // createLine([x, y], [x, y0]);
+  // createLine([x, y0], [x0, y0]);
 }
 
 function drawRectangle(mousePosition) {
-  if (pointsForCurrentObject[nObjectsCreated] == 16) {
-    for (let i = 0; i < 7; i++) {
-      pointsForCurrentObject[nObjectsCreated];
-      eraseLastDrawnPoint();
-    }
-    drawRectangleSides(mousePosition);
-  } else {
-    drawRectangleSides(mousePosition);
+  if (selectedObject.length === 4 * 2) {
+    [...Array(7)].forEach(() => {
+      selectedObject.removeLastVertex();
+    });
   }
+  drawRectangleSides(mousePosition);
+
+  // if (pointsForCurrentObject[nObjectsCreated] == 16) {
+  //   for (let i = 0; i < 7; i++) {
+  //     pointsForCurrentObject[nObjectsCreated];
+  //     eraseLastDrawnPoint();
+  //   }
+  //   drawRectangleSides(mousePosition);
+  // } else {
+  //   drawRectangleSides(mousePosition);
+  // }
 }
 
 function drawPolygon(mousePosition, side) {
-  if (
-    (pointsForCurrentObject[nObjectsCreated] / 2) % 2 !== 2 &&
-    pointsForCurrentObject[nObjectsCreated]
-  ) {
+  // if a line is not created, currently selecting the next polygon point
+  if (selectedObject.length % 2 !== 1) {
     createPoint(mousePosition.x, mousePosition.y);
   }
-  if (pointsForCurrentObject[nObjectsCreated] == side * 4 - 2) {
-    isShouldDrawPolygon = false
-    createPoint(
-      polygonStartPosition.x, polygonStartPosition.y
-    );
+  // if this is the last point of the polygon to be drawn
+  if (selectedObject.length === side * 2 - 1) {
+    isShouldDrawPolygon = false;
+    createPoint(polygonStartPosition.x, polygonStartPosition.y);
   }
+
+  // if (
+  //   (pointsForCurrentObject[nObjectsCreated] / 2) % 2 !== 2 &&
+  //   pointsForCurrentObject[nObjectsCreated]
+  // ) {
+  //   createPoint(mousePosition.x, mousePosition.y);
+  // }
+  // if (pointsForCurrentObject[nObjectsCreated] == side * 4 - 2) {
+  //   isShouldDrawPolygon = false
+  //   createPoint(
+  //     polygonStartPosition.x, polygonStartPosition.y
+  //   );
+  // }
 }
 
 function drawDraggablePolygonSide(mousePosition) {
-  if ((pointsForCurrentObject[nObjectsCreated] / 2) % 2 == 1) {
+  // there is already a line
+  if (selectedObject.length % 2 === 1) {
     createPoint(mousePosition.x, mousePosition.y);
   } else {
-    eraseLastDrawnPoint();
-    createPoint(mousePosition.x, mousePosition.y);
+    selectedObject.removeLastVertex();
+    createPoint(mousePosition.x, mousePosition.y); 
   }
+
+  // if ((pointsForCurrentObject[nObjectsCreated] / 2) % 2 == 1) {
+  //   createPoint(mousePosition.x, mousePosition.y);
+  // } else {
+  //   eraseLastDrawnPoint();
+  //   createPoint(mousePosition.x, mousePosition.y);
+  // }
 }
 
 function drawScene(mousePosition, polygonSide, selectedModel){
   if (
-    selectedModel == DrawMode.polygon &&
-    pointsForCurrentObject[nObjectsCreated] &&
-    pointsForCurrentObject[nObjectsCreated] <= polygonSide * 4 - 4 &&
+    selectedModel === DrawMode.polygon &&
     isShouldDrawPolygon
   ) {
+    // drawPolygon(mousePosition, polygonSide);
     drawDraggablePolygonSide(mousePosition);
   }
   if (isMouseClicked) {
@@ -313,8 +487,32 @@ function drawScene(mousePosition, polygonSide, selectedModel){
       case DrawMode.rectangle:
         drawRectangle(mousePosition);
         break;
+      default:
+        break;
     }
   }
+
+  // if (
+  //   selectedModel == DrawMode.polygon &&
+  //   pointsForCurrentObject[nObjectsCreated] &&
+  //   pointsForCurrentObject[nObjectsCreated] <= polygonSide * 4 - 4 &&
+  //   isShouldDrawPolygon
+  // ) {
+  //   drawDraggablePolygonSide(mousePosition);
+  // }
+  // if (isMouseClicked) {
+  //   switch (selectedModel) {
+  //     case DrawMode.line:
+  //       drawLine(mousePosition);
+  //       break;
+  //     case DrawMode.square:
+  //       drawSquare(mousePosition);
+  //       break;
+  //     case DrawMode.rectangle:
+  //       drawRectangle(mousePosition);
+  //       break;
+  //   }
+  // }
 }
 
 function hexToRgb(hex) {
@@ -326,6 +524,18 @@ function hexToRgb(hex) {
   } : null;
 }
 
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function colorToHex(color) {
+  return rgbToHex(color.r, color.g, color.b);
+}
 /********* MAIN PROGRAM ************/
 
 function init() {
@@ -353,6 +563,26 @@ function init() {
 }
 
 function render() {
+  var color = [];
+  var position = [];
+
+  for (let i = 0; i < objectsList.length; i++) {
+    let drawnObject = objectsList[i];
+    for (let j = 0; j < drawnObject.length; j++) {
+      let vertex = drawnObject.getVertex(j);
+      position.push(vertex.x, vertex.y);
+      color.push(vertex.getColor().r, vertex.getColor().g, vertex.getColor().b);
+    }
+  };
+
+  for (let i = 0; i < selectedObject.length; i++) {
+    let vertex = selectedObject.getVertex(i);
+    position.push(vertex.getX(), vertex.getY());
+    color.push(vertex.getColor().r, vertex.getColor().g, vertex.getColor().b);
+  };
+  
+  console.log(color);
+
   let colorNormalized = color.map((c) => (c - 255) / 255 + 1);
 
   gl.useProgram(program);
@@ -381,13 +611,23 @@ function render() {
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
 
-  for (let i = 0; i <= nObjectsCreated; i++) {
-    gl.drawArrays(
-      gl.LINES,
-      currentObjectIndexStart[i],
-      pointsForCurrentObject[i] / 2
-    );
-  }
+  
+  let offset = 0;
+  let a = 0;
+  objectsList.forEach((drawnObject) => {
+    gl.drawArrays(gl.LINES, offset, drawnObject.length);
+    offset += drawnObject.length;
+  });
+  
+  gl.drawArrays(gl.LINES, offset, selectedObject.length);  
+
+  // for (let i = 0; i <= nObjectsCreated; i++) {
+  //   gl.drawArrays(
+  //     gl.LINES,
+  //     currentObjectIndexStart[i],
+  //     pointsForCurrentObject[i] / 2
+  //   );
+  // }    
 }
 
 function main() {
@@ -408,20 +648,43 @@ function main() {
   });
 
   canvas.addEventListener("mousedown", function (event) {
-    isMouseClicked = true;
-    let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
-    initPoint(mousePosition, nPolygonSide, selectedModel);
+    if (selectedModel !== undefined) {
+      isMouseClicked = true;
 
+      let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
+      initPoint(mousePosition, nPolygonSide, selectedModel);
+    }
   });
 
   canvas.addEventListener("mouseup", function () {
-    isMouseClicked = false;
+    if (selectedModel !== undefined) {
+      isMouseClicked = false;
+      
+      // push selected object to object list and re initialize selected object
+      if (
+        (selectedModel !== DrawMode.polygon) ||
+        (selectedModel === DrawMode.polygon && selectedObject.length === nPolygonSide * 2)
+      ) {
+        if (objectsList === undefined) objectsList = [];
+        objectsList.push(new DrawObject(selectedObject));
+        selectedObject.clear();
+      }
+
+      render();
+      
+      if (!isMouseClicked && !isShouldDrawPolygon) {
+        showDrawnObjects();
+        updateDrawnColor();
+      }
+      
+    };
   });
 
   canvas.addEventListener("mousemove", function (event) {
-    let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
-    drawScene(mousePosition, nPolygonSide, selectedModel);
-    
+    if (selectedModel !== undefined) {
+      let mousePosition = getMousePositionRelativeToCanvas(canvas, event);
+      drawScene(mousePosition, nPolygonSide, selectedModel);
+    }
   });
 }
 
