@@ -236,7 +236,9 @@ function initPoint(mousePosition, polygonSide, selectedModel){
   ) {
     createPoint(mousePosition.x, mousePosition.y);
     polygonStartPosition = mousePosition;
-    isShouldDrawPolygon = true;
+    if(selectedModel === DrawMode.polygon) {
+      isShouldDrawPolygon = true;
+    }
   }
 
   // if (
@@ -672,7 +674,8 @@ function main() {
 
       render();
       
-      if (!isMouseClicked && !isShouldDrawPolygon) {
+      if (!isMouseClicked) {
+        // if (!isMouseClicked && !isShouldDrawPolygon) {
         showDrawnObjects();
         updateDrawnColor();
       }
