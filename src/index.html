@@ -19,6 +19,7 @@
             <div class="model-selector">
                 <div for="model-selector">Models:</div>
                 <div name="model-selector" id="model-selector">
+                    <button onclick="selectModel(this)" value="resize" class="btn btn-primary model-selector-button" id="resize" class="active">Resize</button>
                     <button onclick="selectModel(this)" value="line" class="btn btn-primary model-selector-button" id="line" class="active">Line</button>
                     <button onclick="selectModel(this)" value="square" class="btn btn-primary model-selector-button" id="square">Square</button>
                     <button onclick="selectModel(this)" value="rectangle" class="btn btn-primary model-selector-button" id="rectangle">Rectangle</button>
@@ -35,7 +36,24 @@
         </main>
         <div class="" id="right-side">
             <div id="feedback-banner" class="banner bg-secondary"></div>
-            <div id="drawn-objects-container" class="bg-secondary">
+            <div style="margin-bottom: 10px;">
+                <h4>Selected object</h4>
+                <p id="user-selected-object-text">-</p>
+            </div>
+            <div>
+                <h4>Translate</h4>
+                <div class="slide-label">
+                    <label for="x">X</label>
+                    <input type="range" min="-1" max="1" value="0" step="0.000001" class="slider" id="x" name="x">
+                    <output>0</output>
+                  </div>
+                  <div class="slide-label">
+                    <label for="y">Y</label>
+                    <input type="range" min="-1" max="1" value="0" step="0.000001"  class="slider" id="y" name=y>
+                    <output>0</output>
+                  </div>
+            </div>
+            <div id="drawn-objects-container" class="bg-secondary" style="max-height: 50vh; overflow-y: auto;">
                 <div id="drawn-objects-header">
                     <h3>Drawn objects</h3>
                 </div>
