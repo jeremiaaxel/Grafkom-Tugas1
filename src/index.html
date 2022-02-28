@@ -8,8 +8,41 @@
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
 <body class="bg-primary">
+    <div class="modal" id="help-modal">
+        <div class="modal-bg modal-exit"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Help</h2>
+                <span class="modal-close modal-exit" id="help-modal-exit-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <b>Penggunaan:</b>
+                    <br>
+                    <br>
+                    <b>1. Menggambar</b>
+                    <br>a. Pilih model yang ingin gambar pada pilihan di menu sebelah kiri</li>
+                    <br>b.1. Selain polygon, klik dan tarik pada canvas untuk menggambar
+                    <br>b.2. Untuk polygon, tentukan banyak sisi pada isian yang muncul, dan klik pada canvas untuk menaruk titik
+                    <br>
+                    <br>
+                    <b>2. Mengubah lokasi titik</b>
+                    <br>1. Pilih menu "Resize" pada pilihan menu di sebelah kiri
+                    <br>2. Klik salah satu titik sudut untuk menggeser
+                    <br>Anda juga dapat melakukan translasi pada objek yang dipilih dengan menggeser slider di menu sebelah kanan
+                    <br>
+                    <br>
+                    <b>3. Membersihkan canvas</b>
+                    <br>Klik tombol "Clear Canvas" untuk membersihkan canvas
+                    <br>
+                    <br>
+                </p>
+            </div>
+        </div>
+    </div>
     <div class="" id="topbar">
         <button class="btn btn-alert" id="clear-canvas-button">Clear Canvas</button>
+        <button class="btn btn-help" id="help-button">Help</button>
         <span id="instruction-banner" class="banner bg-secondary w-100">Click on the canvas to draw!</span>
     </div>
     <div class="content">

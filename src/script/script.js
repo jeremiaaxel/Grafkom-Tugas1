@@ -182,16 +182,33 @@ function selectModel(elem) {
   showFeedback(`Model ${selectedModel} selected`, 2000);
 
   let sidesInput = document.getElementById("sides-input");
-  if (selectedModel == DrawMode.polygon) {
-    sidesInput.style.display = "block";
-    instructionBanner.innerText = "Click on the canvas to put the nodes";
-  } else {
-    sidesInput.style.display = "none";
-    instructionBanner.innerText = "Click and drag on the canvas to draw";
+  switch(selectedModel) {
+    case DrawMode.polygon:
+      sidesInput.style.display = "block";
+      instructionBanner.innerText = "Click on the canvas to put the nodes";
+      break;
+    case DrawMode.resize:
+      sidesInput.style.display = "none";
+      instructionBanner.innerText = "Click on one of the object's vertex to resize";
+      break;
+    default:
+      sidesInput.style.display = "none";
+      instructionBanner.innerText = "Click and drag on the canvas to draw";
+      break;
   }
 
   sidesInput.addEventListener("change", function () {
     nPolygonSide = sidesInput.lastElementChild.value;
+  });
+}
+
+function toggleHelpModal() {
+  var modal = document.getElementById("help-modal");
+  modal.classList.add("open");
+  var modalExitButton = document.getElementById("help-modal-exit-button");
+  modalExitButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    modal.classList.remove("open");
   });
 }
 
@@ -288,6 +305,8 @@ function getDistance(a, b) {
 }
 
 function getClosestObjectFromCursorIndex(mousePosition){
+  let maxDistance = 0.03; // Maximum distance from an object to be selected
+
   let closestObject = {
     distance: 3,
     indexObject: undefined,
@@ -298,7 +317,7 @@ function getClosestObjectFromCursorIndex(mousePosition){
   objectsList.forEach((object, indexObject)=>{
     object.vertices.forEach((vertex, indexVertex)=>{
       let distance = getDistance(mousePosition, vertex)
-      if(distance < closestObject.distance){
+      if(distance <= maxDistance && distance < closestObject.distance){
         closestObject.distance = distance
         closestObject.indexObject = indexObject
         closestObject.indexVertex = indexVertex
@@ -306,10 +325,12 @@ function getClosestObjectFromCursorIndex(mousePosition){
       }
     })
   })
+  
+  if (closestObject.indexObject != undefined) {
+    setUserSelectedObject(closestObject.indexObject, closestObject.modelType)
 
-  setUserSelectedObject(closestObject.indexObject, closestObject.modelType)
-
-  return closestObject
+    return closestObject
+  }
 }
 
 /********* DRAWING UTILITY FUNCTIONS ************/
@@ -340,14 +361,6 @@ function createPoint(x, y) {
   selectedObject.modelType = selectedModel;
   selectedObject.add(vertex);
 
-  // position.push(x, y);
-
-  // color.push(selectedColor.r, selectedColor.g, selectedColor.b);
-  // color.push(selectedColor.r, selectedColor.g, selectedColor.b);
-
-  // pointsForCurrentObject[nObjectsCreated] += 2;
-  // totalPointsCreated += 1;
-
   render();
 }
 
@@ -370,28 +383,6 @@ function initPoint(mousePosition, polygonSide, selectedModel) {
       isShouldDrawPolygon = true;
     }
   }
-
-  // if (
-  //   selectedModel == DrawMode.polygon &&
-  //   pointsForCurrentObject[nObjectsCreated] < polygonSide * 4 &&
-  //   isShouldDrawPolygon
-  // ) {
-  //   drawPolygon(mousePosition, nPolygonSide);
-  // } else if (
-  //   !(selectedModel == DrawMode.polygon) ||
-  //   (selectedModel == DrawMode.polygon &&
-  //     !pointsForCurrentObject[nObjectsCreated] &&
-  //     nObjectsCreated == -1) ||
-  //   (selectedModel == DrawMode.polygon &&
-  //     pointsForCurrentObject[nObjectsCreated])
-  // ) {
-  //   nObjectsCreated++;
-  //   currentObjectIndexStart[nObjectsCreated] = totalPointsCreated;
-  //   pointsForCurrentObject[nObjectsCreated] = 0;
-  //   createPoint(mousePosition.x, mousePosition.y);
-  //   polygonStartPosition = mousePosition
-  //   isShouldDrawPolygon = true
-  // }
 }
 
 function createLine(a, b) {
@@ -414,13 +405,6 @@ function eraseLastDrawnPoint() {
 function drawLine(mousePosition) {
   if (selectedObject.length === 2) selectedObject.removeLastVertex();
   createPoint(mousePosition.x, mousePosition.y);
-
-  // if (pointsForCurrentObject[nObjectsCreated] == 4) {
-  //   eraseLastDrawnPoint();
-  //   createPoint(mousePosition.x, mousePosition.y);
-  // } else {
-  //   createPoint(mousePosition.x, mousePosition.y);
-  // }
 }
 
 function drawSquareSides(mousePosition) {
@@ -455,42 +439,6 @@ function drawSquareSides(mousePosition) {
       createLine([x0, y0 + max], [x0, y0]);
     }
   }
-
-  // let latestPosition = {
-  //   x0: position[position.length - 2],
-  //   y0: position[position.length - 1],
-  // };
-
-  // let { x, y } = mousePosition;
-  // let { x0, y0 } = latestPosition;
-
-  // let abs = Math.abs;
-  // let max = Math.max(abs(x - x0), abs(y - y0));
-  // if (x0 > x) {
-  //   if (y0 > y) {
-  //     createPoint(x0 - max, y0);
-  //     createLine([x0 - max, y0], [x0 - max, y0 - max]);
-  //     createLine([x0 - max, y0 - max], [x0, y0 - max]);
-  //     createLine([x0, y0 - max], [x0, y0]);
-  //   } else {
-  //     createPoint(x0, y0 + max);
-  //     createLine([x0, y0 + max], [x0 - max, y0 + max]);
-  //     createLine([x0 - max, y0 + max], [x0 - max, y0]);
-  //     createLine([x0 - max, y0], [x0, y0]);
-  //   }
-  // } else {
-  //   if (y0 > y) {
-  //     createPoint(x0 + max, y0);
-  //     createLine([x0 + max, y0], [x0 + max, y0 - max]);
-  //     createLine([x0 + max, y0 - max], [x0, y0 - max]);
-  //     createLine([x0, y0 - max], [x0, y0]);
-  //   } else {
-  //     createPoint(x0 + max, y0);
-  //     createLine([x0 + max, y0], [x0 + max, y0 + max]);
-  //     createLine([x0 + max, y0 + max], [x0, y0 + max]);
-  //     createLine([x0, y0 + max], [x0, y0]);
-  //   }
-  // }
 }
 
 function drawSquare(mousePosition) {
@@ -503,15 +451,6 @@ function drawSquare(mousePosition) {
   }
 
   drawSquareSides(mousePosition);
-
-  // if (pointsForCurrentObject[nObjectsCreated] == 16) {
-  //   for (let i = 0; i < 7; i++) {
-  //     eraseLastDrawnPoint();
-  //   }
-  //   drawSquareSides(mousePosition);
-  // } else {
-  //   drawSquareSides(mousePosition);
-  // }
 }
 
 function drawRectangleSides(mousePosition) {
@@ -524,19 +463,6 @@ function drawRectangleSides(mousePosition) {
   createLine([x0, y], [x, y]);
   createLine([x, y], [x, y0]);
   createLine([x, y0], [x0, y0]);
-
-  // let latestPosition = {
-  //   x0: position[position.length - 2],
-  //   y0: position[position.length - 1],
-  // };
-
-  // let { x, y } = mousePosition;
-  // let { x0, y0 } = latestPosition;
-
-  // createPoint(x0, y);
-  // createLine([x0, y], [x, y]);
-  // createLine([x, y], [x, y0]);
-  // createLine([x, y0], [x0, y0]);
 }
 
 function drawRectangle(mousePosition) {
@@ -546,16 +472,6 @@ function drawRectangle(mousePosition) {
     });
   }
   drawRectangleSides(mousePosition);
-
-  // if (pointsForCurrentObject[nObjectsCreated] == 16) {
-  //   for (let i = 0; i < 7; i++) {
-  //     pointsForCurrentObject[nObjectsCreated];
-  //     eraseLastDrawnPoint();
-  //   }
-  //   drawRectangleSides(mousePosition);
-  // } else {
-  //   drawRectangleSides(mousePosition);
-  // }
 }
 
 function drawPolygon(mousePosition, side) {
@@ -568,19 +484,6 @@ function drawPolygon(mousePosition, side) {
     isShouldDrawPolygon = false;
     createPoint(polygonStartPosition.x, polygonStartPosition.y);
   }
-
-  // if (
-  //   (pointsForCurrentObject[nObjectsCreated] / 2) % 2 !== 2 &&
-  //   pointsForCurrentObject[nObjectsCreated]
-  // ) {
-  //   createPoint(mousePosition.x, mousePosition.y);
-  // }
-  // if (pointsForCurrentObject[nObjectsCreated] == side * 4 - 2) {
-  //   isShouldDrawPolygon = false
-  //   createPoint(
-  //     polygonStartPosition.x, polygonStartPosition.y
-  //   );
-  // }
 }
 
 function drawDraggablePolygonSide(mousePosition) {
@@ -591,13 +494,6 @@ function drawDraggablePolygonSide(mousePosition) {
     selectedObject.removeLastVertex();
     createPoint(mousePosition.x, mousePosition.y);
   }
-
-  // if ((pointsForCurrentObject[nObjectsCreated] / 2) % 2 == 1) {
-  //   createPoint(mousePosition.x, mousePosition.y);
-  // } else {
-  //   eraseLastDrawnPoint();
-  //   createPoint(mousePosition.x, mousePosition.y);
-  // }
 }
 
 function drawScene(mousePosition, polygonSide, selectedModel) {
@@ -620,28 +516,6 @@ function drawScene(mousePosition, polygonSide, selectedModel) {
         break;
     }
   }
-
-  // if (
-  //   selectedModel == DrawMode.polygon &&
-  //   pointsForCurrentObject[nObjectsCreated] &&
-  //   pointsForCurrentObject[nObjectsCreated] <= polygonSide * 4 - 4 &&
-  //   isShouldDrawPolygon
-  // ) {
-  //   drawDraggablePolygonSide(mousePosition);
-  // }
-  // if (isMouseClicked) {
-  //   switch (selectedModel) {
-  //     case DrawMode.line:
-  //       drawLine(mousePosition);
-  //       break;
-  //     case DrawMode.square:
-  //       drawSquare(mousePosition);
-  //       break;
-  //     case DrawMode.rectangle:
-  //       drawRectangle(mousePosition);
-  //       break;
-  //   }
-  // }
 }
 
 function resizeSelectedObject(mousePosition) {
@@ -763,14 +637,6 @@ function render() {
   });
 
   gl.drawArrays(gl.LINES, offset, selectedObject.length);
-
-  // for (let i = 0; i <= nObjectsCreated; i++) {
-  //   gl.drawArrays(
-  //     gl.LINES,
-  //     currentObjectIndexStart[i],
-  //     pointsForCurrentObject[i] / 2
-  //   );
-  // }
 }
 
 function main() {
@@ -784,6 +650,12 @@ function main() {
     showDrawnObjects();
     render();
     showFeedback("Canvas cleared", 2000);
+  });
+
+  const helpButton = document.getElementById("help-button");
+  helpButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    toggleHelpModal();
   });
 
   const colorSelector = document.getElementById("color-selector");
@@ -800,8 +672,10 @@ function main() {
       initPoint(mousePosition, nPolygonSide, selectedModel);
     }else if(selectedModel == DrawMode.resize){
       let closestObject = getClosestObjectFromCursorIndex(mousePosition);
-      closestObjectsFromCursor = closestObject;
-      isMouseClicked = true;
+      if (closestObject != undefined) {
+        closestObjectsFromCursor = closestObject;
+        isMouseClicked = true;
+      }
     }
   });
 
