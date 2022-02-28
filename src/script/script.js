@@ -235,7 +235,6 @@ function showDrawnObjects() {
 
 function updateDrawnColor() {
   objectsList.forEach((drawnObject, index) => {
-    console.log(drawnObject);
     var searchQuery = "drawn-object-color-" + index;
     var drawnObjectColor = document.getElementById(searchQuery);
     drawnObjectColor.addEventListener("change", function () {
@@ -288,6 +287,7 @@ function setUserSelectedObject(index, name) {
   let p = document.getElementById("user-selected-object-text");
 
   userSelectedObjectIndex = index;
+  selectedObject = objectsList[index];
 
   let object = objectsList[userSelectedObjectIndex];
   let firstVertices = object.vertices[0];
@@ -609,8 +609,6 @@ function render() {
     position.push(vertex.getX(), vertex.getY());
     color.push(vertex.getColor().r, vertex.getColor().g, vertex.getColor().b);
   }
-
-  // console.log(color);
 
   let colorNormalized = color.map((c) => (c - 255) / 255 + 1);
 
