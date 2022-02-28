@@ -7,44 +7,116 @@
     <link rel="stylesheet" href="styles/styles.css">
     <title>Grafika Komputer: Kelompk 5</title>
 </head>
-<body>
-    <div id="sidebar">
-        <div class="model-selector">
-            <label for="model-selector">Model</label>
-            <select name="model-selector" id="model-selector">
-                <option value="line">Line</option>
-                <option value="square">Square</option>
-                <option value="rectangle">Rectangle</option>
-                <option value="polygon">Polygon</option>
-            </select>
+<body class="bg-primary">
+    <div class="modal" id="help-modal">
+        <div class="modal-bg modal-exit"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Help</h2>
+                <span class="modal-close modal-exit" id="help-modal-exit-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <b>Penggunaan:</b>
+                    <br>
+                    <br>
+                    <b>1. Menggambar</b>
+                    <br>a. Pilih model yang ingin gambar pada pilihan di menu sebelah kiri</li>
+                    <br>b.1. Selain polygon, klik dan tarik pada canvas untuk menggambar
+                    <br>b.2. Untuk polygon, tentukan banyak sisi pada isian yang muncul, dan klik pada canvas untuk menaruk titik
+                    <br>
+                    <br>
+                    <b>2. Mengubah lokasi titik</b>
+                    <br>1. Pilih menu "Resize" pada pilihan menu di sebelah kiri
+                    <br>2. Klik salah satu titik sudut untuk menggeser
+                    <br>Anda juga dapat melakukan translasi pada objek yang dipilih dengan menggeser slider di menu sebelah kanan
+                    <br>
+                    <br>
+                    <b>3. Membersihkan canvas</b>
+                    <br>Klik tombol "Clear Canvas" untuk membersihkan canvas
+                    <br>
+                    <br>
+                </p>
+            </div>
         </div>
-        <button id="add-model-button" type="button" value="add">Add</button>
-        <span id="feedback-banner"></span>
     </div>
-    <main>
-        <canvas id="gl-canvas" width="600" height="600"></canvas>
-    </main>
+    <div class="" id="topbar">
+        <button class="btn btn-alert" id="clear-canvas-button">Clear Canvas</button>
+        <button class="btn btn-help" id="help-button">Help</button>
+        <span id="instruction-banner" class="banner bg-secondary w-100">Click on the canvas to draw!</span>
+    </div>
+    <div class="content">
+        <div id="sidebar">
+            <div for="model-selector">Color:</div>
+            <input type="color" id="color-selector">
+            <div class="model-selector">
+                <div for="model-selector">Models:</div>
+                <div name="model-selector" id="model-selector">
+                    <button onclick="selectModel(this)" value="resize" class="btn btn-primary model-selector-button" id="resize" class="active">Resize</button>
+                    <button onclick="selectModel(this)" value="line" class="btn btn-primary model-selector-button" id="line" class="active">Line</button>
+                    <button onclick="selectModel(this)" value="square" class="btn btn-primary model-selector-button" id="square">Square</button>
+                    <button onclick="selectModel(this)" value="rectangle" class="btn btn-primary model-selector-button" id="rectangle">Rectangle</button>
+                    <button onclick="selectModel(this)" value="polygon" class="btn btn-primary model-selector-button" id="polygon">Polygon</button>
+                    <button onclick="downloadObjectAsJson()" id="save" class="btn btn-primary model-selector-button">Download</button>
+                    <input type = "file" id="load"\>
+                </div>
+            </div>
+            <div id="sides-input" style="display: none;">
+                <label for="sides">Polygon sides</label>
+                <input type="number" name="sides" id="sides" value="3" min="3" max="10">
+            </div>
+        </div>
+        <main>
+            <canvas id="gl-canvas" width="600" height="600"></canvas>
+        </main>
+        <div class="" id="right-side">
+            <div id="feedback-banner" class="banner bg-secondary"></div>
+            <div style="margin-bottom: 10px;">
+                <h4>Selected object</h4>
+                <p id="user-selected-object-text">-</p>
+            </div>
+            <div>
+                <h4>Translate</h4>
+                <div class="slide-label">
+                    <label for="x">X</label>
+                    <input type="range" min="-1" max="1" value="0" step="0.000001" class="slider" id="x" name="x">
+                    <output>0</output>
+                  </div>
+                  <div class="slide-label">
+                    <label for="y">Y</label>
+                    <input type="range" min="-1" max="1" value="0" step="0.000001"  class="slider" id="y" name=y>
+                    <output>0</output>
+                  </div>
+            </div>
+            <div id="drawn-objects-container" class="bg-secondary" style="max-height: 50vh; overflow-y: auto;">
+                <div id="drawn-objects-header">
+                    <h3>Drawn objects</h3>
+                </div>
+                <div id="drawn-objects-list">
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script/script.js"></script>
-    <!-- <script id="vertex-shader" type="notjs" src="shader/vertexShader.js"></script>
-    <script id="fragment-shader" type="notjs" src="shader/fragmentShader.js"></script> -->
     <script id="vertex-shader" type="notjs">
-        attribute vec2 a_position;
+        attribute vec4 a_position;
+        attribute vec4 a_color;
 
-        uniform mat3 u_matrix;
+        varying vec4 v_color;
 
         void main() {
-            // Multiply the position by the matrix.
-            gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+            v_color = a_color;
+            gl_Position = a_position;
         }
     </script>
     <script id="fragment-shader" type="notjs">
         precision mediump float;
-        
-        uniform vec4 u_color;
-        
-        void main() {
-            gl_FragColor = u_color;
+
+        varying vec4 v_color;
+
+        void main(){
+            gl_FragColor = v_color;
         }
-    </script>    
+    </script>
 </body>
 </html>

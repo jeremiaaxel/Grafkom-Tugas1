@@ -4,7 +4,7 @@
     -webkit-box-sizing: border-box;
             box-sizing: border-box;
   }
-  
+ 
   .main {
     display: -webkit-box;
     display: -ms-flexbox;
@@ -20,11 +20,12 @@
   
   #gl-canvas {
     border: 0.1em solid black;
+    background-color: white;
     height: 80vh;
   }
   
 
-body {
+.content {
   display: flex;
   flex-direction: row;
 }
@@ -33,25 +34,179 @@ body {
   width: 20%;
   display: flex;
   flex-direction: column;
-  background-color: gainsboro;
+  
+  background-color: #DADBBD;
   padding: 1rem;
 }
 
+button.active, button:active {
+  background-color: #151D3B;
+  color: white;
+}
+
+#clear-canvas-button {
+  flex-shrink: 0;
+}
+
+.model-selector {
+  margin-top: 0.5rem;
+}
+
 #model-selector {
+  display: flex;
+  flex-direction: column;
   width: 100%;
 }
 
-#sidebar button {
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
-  margin-top: 0.5rem;
-  background-color: aquamarine;
+#model-selector>button {
+  width: 5rem;
+  height: 5rem;
+}
+
+#sides-input {
+  width: 100%;
+}
+
+#topbar {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  height: 4rem;
+}
+
+.btn {
+  padding: 0.5rem;
   border-radius: 7px;
+  border: none;
   cursor: pointer;
 }
 
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-alert {
+  background-color: #dc3545;
+  color: white;
+  font-weight: bold;
+}
+
+.btn-help {
+  background-color: #5cb85c;
+  color: white;
+  font-weight: bold;
+}
+
+#model-selector>button {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  margin-top: 0.5rem;
+}
+
 #feedback-banner {
-  margin-top: 1rem;
   word-wrap: break-word;
   font-size: small;
+  margin-bottom: 1rem;
+}
+
+#instruction-banner {
+  flex-grow: 1;
+}
+
+.banner {
+  height: 1rem;
+  box-sizing: content-box;
+  padding: 0.5rem;
+  border-radius: 5px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.bg-primary {
+  background-color: #DADBBD;
+}
+
+.bg-secondary {
+  background-color: #eff0d8;
+}
+
+#right-side {
+  margin: 1rem;
+  width: 100%;
+}
+
+#drawn-objects-container {
+  padding: 1rem;
+}
+
+.drawn-object-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 0.1em solid black;
+  margin: 0.5rem;
+}
+
+.no-bullet {
+  list-style: none;
+}
+
+.modal {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.open {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.modal-bg {
+  position: absolute;
+  background: teal;
+  width: 100%;
+  height: 100%;
+}
+
+.modal-container {
+  border-radius: 10px;
+  background: #fff;
+  position: relative;
+  padding: 30px;
+}
+
+.modal-close {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  outline: none;
+  appearance: none;
+  color: red;
+  background: none;
+  border: 0px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 2rem;
+}
+
+.modal-body {
+  padding: 1rem;
 }
