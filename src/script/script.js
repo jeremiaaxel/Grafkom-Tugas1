@@ -728,4 +728,32 @@ function main() {
   });
 }
 
+function downloadObjectAsJson(){
+  var canvasContents = canvas.toDataURL(); // a data URL of the current canvas image
+  var data = { image: canvasContents, date: Date.now() };
+  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", "download.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function readSingleFile(evt) {
+  var f = evt.target.files[0];
+
+  if (f) {
+      var r = new FileReader();
+      r.onload = function (e) {
+          var contents = e.target.result;
+          data = JSON.parse(contents);
+          render();
+      }
+      r.readAsText(f);
+  } else {
+      alert("Failed to load file");
+  }
+}
+
 window.onload = main;
