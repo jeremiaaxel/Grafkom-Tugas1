@@ -79,6 +79,7 @@ class DrawObject {
   }
 
   clear() {
+    this.modelType = "";
     this.vertices = [];
   }
 
@@ -317,7 +318,7 @@ function getClosestObjectFromCursorIndex(mousePosition){
   objectsList.forEach((object, indexObject)=>{
     object.vertices.forEach((vertex, indexVertex)=>{
       let distance = getDistance(mousePosition, vertex)
-      if(distance <= maxDistance && distance < closestObject.distance){
+      if(distance < closestObject.distance){
         closestObject.distance = distance
         closestObject.indexObject = indexObject
         closestObject.indexVertex = indexVertex
@@ -388,18 +389,6 @@ function initPoint(mousePosition, polygonSide, selectedModel) {
 function createLine(a, b) {
   createPoint(a[0], a[1]);
   createPoint(b[0], b[1]);
-}
-
-// harusnya udah ga kepake
-function eraseLastDrawnPoint() {
-  for (let i = 0; i < 2; i++) {
-    position.pop();
-    for (let j = 0; j < 3; j++) {
-      color.pop();
-    }
-  }
-  pointsForCurrentObject[nObjectsCreated] -= 2;
-  totalPointsCreated -= 1;
 }
 
 function drawLine(mousePosition) {
@@ -518,6 +507,20 @@ function drawScene(mousePosition, polygonSide, selectedModel) {
   }
 }
 
+function getFarthestVertex(position) {
+  let vertex = selectedObject.getVertex(0);
+  let distance = getDistance(position, vertex);
+  for (let i = 1; i < selectedObject.length; i++) {
+    let currentVertex = selectedObject.getVertex(i);
+    let currentDistance = getDistance(position, currentVertex);
+    if (currentDistance > distance) {
+      vertex = currentVertex;
+      distance = currentDistance;
+    }
+  }
+  return vertex;
+}
+
 function resizeSelectedObject(mousePosition) {
   if(closestObjectsFromCursor && closestObjectsFromCursor.distance < 0.05 && isMouseClicked){
     let vertices = objectsList[closestObjectsFromCursor.indexObject].vertices
@@ -526,8 +529,16 @@ function resizeSelectedObject(mousePosition) {
       closestVertex.setX(mousePosition.x)
       closestVertex.setY(mousePosition.y)
       render();
-    }else if (closestObjectsFromCursor.modelType == DrawMode.square){
-      console.log(objectsList[closestObjectsFromCursor.indexObject].vertices)
+    }else if (
+      closestObjectsFromCursor.modelType == DrawMode.square || closestObjectsFromCursor.modelType == DrawMode.rectangle
+    ){
+      selectedObject = objectsList[closestObjectsFromCursor.indexObject];
+      var farthestVertex = new Vertex(getFarthestVertex(mousePosition));
+      selectedObject.clear();
+      selectedObject.modelType = objectsList[closestObjectsFromCursor.indexObject].modelType;
+      selectedObject.add(farthestVertex);
+      if (closestObjectsFromCursor.modelType == DrawMode.square) drawSquare(mousePosition);
+      else drawRectangle(mousePosition);
     }
   }
 }
